@@ -1,7 +1,7 @@
 services:
-  proxy:
+  letsencrypt-proxy:
+    container_name: letsencrypt-proxy
     image: nginxproxy/nginx-proxy:alpine
-    container_name: proxy
     restart: always
     ports:
       - 80:80
@@ -9,39 +9,44 @@ services:
     labels:
       com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: "true"
     volumes:
-      - certs:/etc/nginx/certs:ro
-      - vhost.d:/etc/nginx/vhost.d
-      - html:/usr/share/nginx/html
+      - letsencrypt-vhost:/etc/nginx/vhost.d
+      - letsencrypt-certs:/etc/nginx/certs:ro
+      - letsencrypt-html:/usr/share/nginx/html
       - /var/run/docker.sock:/tmp/docker.sock:ro
     networks:
-      - proxy-tier
-      - cert-network
+      - letsencrypt-proxy-tier
+      - letsencrypt-network
 
   letsencrypt-companion:
-    image: nginxproxy/acme-companion
     container_name: letsencrypt-companion
+    image: nginxproxy/acme-companion
     restart: always
+    depends_on:
+      - letsencrypt-proxy
     volumes:
-      - certs:/etc/nginx/certs
-      - acme:/etc/acme.sh
-      - vhost.d:/etc/nginx/vhost.d
-      - html:/usr/share/nginx/html
+      - letsencrypt-acme:/etc/acme.sh
+      - letsencrypt-vhost:/etc/nginx/vhost.d
+      - letsencrypt-certs:/etc/nginx/certs
+      - letsencrypt-html:/usr/share/nginx/html
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
-      - proxy-tier
-    depends_on:
-      - proxy
+      - letsencrypt-proxy-tier
+
 
 networks:
-  proxy-tier:
-    name: proxy-tier
+  letsencrypt-proxy-tier:
+    name: letsencrypt-proxy-tier
     driver: bridge
-  cert-network:
-    name: cert-network
+  letsencrypt-network:
+    name: letsencrypt-network
     driver: bridge
 
 volumes:
-  certs:
-  acme:
-  vhost.d:
-  html:
+  letsencrypt-acme:
+    name: letsencrypt-acme
+  letsencrypt-vhost:
+    name: letsencrypt-vhost
+  letsencrypt-certs:
+    name: letsencrypt-certs
+  letsencrypt-html:
+    name: letsencrypt-html
