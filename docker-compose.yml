@@ -9,8 +9,8 @@ services:
         max-size: 10m
         max-file: 3
     ports:
-      - 80:80
-      - 443:443
+      - ${SSL_AUTOMATATION_IP:-0.0.0.0}:80:80
+      - ${SSL_AUTOMATATION_IP:-0.0.0.0}:443:443
     labels:
       com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: "true"
     volumes:
